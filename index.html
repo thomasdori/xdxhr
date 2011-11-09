@@ -1,0 +1,241 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+	<head>
+	  	<script src="jquery_1.6.4.js" type="text/javascript"></script>  	
+		<link rel="stylesheet" href="qunit.css" type="text/css" media="screen" />
+		<script type="text/javascript" src="qunit.js"></script>
+		
+		<!-- Scripts to test -->
+		<script type="text/javascript" src="jquery.xdxhr.js"></script>
+		
+		
+		<!-- Tests -->
+		<script type="text/javascript">
+		  $(document).ready(function(){
+    		var scripts, script, urls, url, methods, method, xhr, target, testData;
+
+			testData = {'data':'response text from the server'};
+		    
+		    scripts = {
+		    	"WITHOUT": "dataWithoutHeader.php",
+		    	"WITH": "dataWithHeader.php"
+		    };
+		    
+		    urls = {
+				"same domain": 'http://www.localhost.at/XDXHR_Plugin/',
+	        	"other path": 'http://www.localhost.at/XDXHR_Plugin/folder/',
+	        	"sub domain": 'http://subdomain.localhost.at/XDXHR_Plugin/',
+	        	"other domain": 'http://www.otherdomain.at/XDXHR_Plugin/',
+	        	"other port": 'http://www.localhost.at:8080/XDXHR_Plugin/',
+	        	"other protocol": 'https://www.localhost.at/XDXHR_Plugin/'		    
+		    };
+		    
+		    methods = {
+			    "GET": "GET",
+		    	"POST": "POST"
+		    };
+		    	
+
+
+			//Test for URL Class		    			
+			module("URL Object");
+			
+			test("URL string is empty", 9, function() {
+
+			  var urlString = "";
+			  var url = $.url(urlString);
+			  
+			  equal(url.href, urlString, "href");
+			  equal(url.protocol, "", "protocol");
+			  equal(url.user, "", "user");
+			  equal(url.password, "", "password");
+			  equal(url.host, "", "host");
+			  equal(url.port, "", "port");
+			  equal(url.path, "", "path");
+			  equal(url.search, "", "search");
+			  equal(url.fragment, "", "fragment");
+			});
+			
+			test("URL string is undefined", 9, function() {
+			  var urlStirng = undefined;
+			  var url = $.url(urlStirng);
+			  
+			  equal(url.href, "", "href");
+			  equal(url.protocol, "", "protocol");
+			  equal(url.user, "", "user");
+			  equal(url.password, "", "password");
+			  equal(url.host, "", "host");
+			  equal(url.port, "", "port");
+			  equal(url.path, "", "path");
+			  equal(url.search, "", "search");
+			  equal(url.fragment, "", "fragment");
+			});
+			
+			test("URL string does not exist", 9, function() {
+			  var url = $.url();
+			  
+			  equal(url.href, "", "href");
+			  equal(url.protocol, "", "protocol");
+			  equal(url.user, "", "user");
+			  equal(url.password, "", "password");
+			  equal(url.host, "", "host");
+			  equal(url.port, "", "port");
+			  equal(url.path, "", "path");
+			  equal(url.search, "", "search");
+			  equal(url.fragment, "", "fragment");
+			});
+			
+			test("Very simple URL (http://www.example.org)", 9, function() {
+			  var urlString = "http://www.example.org";
+			  var url = $.url(urlString);
+			  
+			  equal(url.href, urlString, "href");
+			  equal(url.protocol, "http", "protocol");
+			  equal(url.user, "", "user");
+			  equal(url.password, "", "password");
+			  equal(url.host, "www.example.org", "host");
+			  equal(url.port, "", "port");
+			  equal(url.path, "", "path");
+			  equal(url.search, "", "search");
+			  equal(url.fragment, "", "fragment");
+			});
+			
+			test("Simple URL (http://www.example.org/index.php)", 9, function() {
+			  var urlString = "http://www.example.org/index.php";
+			  var url = $.url(urlString);
+			  
+			  equal(url.href, urlString, "href");
+			  equal(url.protocol, "http", "protocol");
+			  equal(url.user, "", "user");
+			  equal(url.password, "", "password");
+			  equal(url.host, "www.example.org", "host");
+			  equal(url.port, "", "port");
+			  equal(url.path, "index.php", "path");
+			  equal(url.search, "", "search");
+			  equal(url.fragment, "", "fragment");
+			});
+			
+			test("Common URL (https://www.example.org:8080/subfolder/script.php?param1=1&param2=2#fragment)", 9, function() {
+			  var urlString = "https://www.example.org:8080/subfolder/script.php?param1=1&param2=2#fragment";
+			  var url = $.url(urlString);
+			  
+			  equal(url.href, urlString, "href");
+			  equal(url.protocol, "https", "protocol");
+			  equal(url.user, "", "user");
+			  equal(url.password, "", "password");
+			  equal(url.host, "www.example.org", "host");
+			  equal(url.port, "8080", "port");
+			  equal(url.path, "subfolder/script.php", "path");
+			  equal(url.search, "param1=1&param2=2", "search");
+			  equal(url.fragment, "fragment", "fragment");
+			});			
+			
+			test("Complex ULR (https://user:password@www.example.org:8080/subfolder/script.php?param1=1&param2=2#fragment)", 9, function() {
+			  var urlString = "https://user:password@www.example.org:8080/subfolder/script.php?param1=1&param2=2#fragment";
+			  var url = $.url(urlString);
+
+			  equal(url.href, urlString, "href");
+			  equal(url.protocol, "https", "protocol");
+			  equal(url.user, "user", "user");
+			  equal(url.password, "password", "password");
+			  equal(url.host, "www.example.org", "host");
+			  equal(url.port, "8080", "port");
+			  equal(url.path, "subfolder/script.php", "path");
+			  equal(url.search, "param1=1&param2=2", "search");
+			  equal(url.fragment, "fragment", "fragment");
+			});
+
+
+			test("Test isSameOrigin('http://www.localhost.at/xhr/dataWithoutHeader.php')", 6, function() {
+		  	  var originUrl = "http://www.localhost.at/xhr/dataWithoutHeader.php";
+
+
+			  isSameOrigin(
+                      urls["same domain"] + scripts["WITH"], originUrl, "");
+			  isSameOrigin(
+                      urls["other path"] + scripts["WITH"], originUrl, "");
+			  isSameOrigin(
+                      urls["sub domain"] + scripts["WITH"], originUrl, "host");
+			  isSameOrigin(
+                      urls["other domain"] + scripts["WITH"], originUrl, "host");
+			  isSameOrigin(
+                      urls["other port"] + scripts["WITH"], originUrl, "port");
+			  isSameOrigin(
+                      urls["other protocol"] + scripts["WITH"], originUrl, "protocol");
+			});
+
+
+			function isSameOrigin(urlString, originUrl, expected){
+				equals($.url(urlString).compareOrigin(originUrl), expected, "foreign " + urlString + ", origin:" + originUrl);
+			}
+
+
+			//Tests for XHR class
+			for (script in scripts){
+				for (method in methods){
+					module("XHR to script " + script + " header");
+					for (url in urls){
+						test(
+							method + " request to " +
+                                    url + " ('" + urls[url] + scripts[script] + "')", 1,
+							function(path, script, method) {
+								return function(){
+									stop();
+									setTimeout(
+										function() {
+											//if(script === "dataWithoutHeader.php"){
+												//error is allowed
+											//	$.xdxhr({url: path + script, success: successCallback, error: expectedErrorCallback, type: method, data: testData});
+											//} else {
+												//error should not occure
+												$.xdxhr({url: path + script, success: successCallback, error: errorCallback, type: method, data: testData});
+											//}
+										}, 1
+									);
+								};
+							}(urls[url], scripts[script], methods[method])
+						);
+					}
+				}
+			}
+
+
+			function successCallback(data, textStatus, jqXHR){
+				start();
+		    	equal(data, testData.data, "response data");
+		  	}
+
+
+		  	function expectedErrorCallback(jqXHR, textStatus, errorThrown){
+		  		start();
+		  		if(!textStatus){
+		  			//IE does not give any error description
+			  		equal(textStatus, undefined, "response data");
+		  		} else {
+					equal(textStatus, "error", "response data");
+				}
+		  	}
+
+		  	function errorCallback(jqXHR, textStatus, errorThrown){
+		  		start();
+				ok(false, textStatus);
+		  	}
+
+		  });
+		  
+
+	  	</script>
+	  
+	</head>
+	
+	<body>
+		<h1 id="qunit-header">Cross Domain Requests</h1>
+		<h2 id="qunit-banner"></h2>
+		<div id="qunit-testrunner-toolbar"></div>
+		<h2 id="qunit-userAgent"></h2>
+		<ol id="qunit-tests"></ol>
+		<div id="qunit-fixture">test markup, will be hidden</div>
+	</body>
+
+</html>

@@ -1,0 +1,80 @@
+(function($) {
+  "use strict";
+
+  //Constants used as url.compareOrigin return value
+  var origin = {'host':'host', 'protocol':'protocol', 'port':'port'},
+
+	overWritejQueryAjax = function() {
+    // Create the request object
+    // (This is still attached to ajaxSettings for backward compatibility)
+    $.ajaxSettings.xdr = function() {
+      return (window.XDomainRequest ? new window.XDomainRequest() : null);
+    };
+
+    // Determine support properties
+    (function(xdr) {
+      $.extend($.support, { iecors: !!xdr });
+    }($.ajaxSettings.xdr()));
+
+    // Create transport if the browser can provide an xdr
+    if ($.support.iecors) {
+      $.ajaxTransport(function(s) {
+        return {
+          send: function(headers, complete) {
+            var xdr = s.xdr();
+
+            xdr.onload = function() {
+              complete(200, 'OK', { text: xdr.responseText }, headers);
+            };
+
+            xdr.onerror = s.error;
+
+            xdr.open(s.type, s.url);
+            xdr.send(s.data ? $.param(s.data) : null);
+          }
+        };
+      });
+    }
+  };
+
+
+  $.xdxhr = function(options) {
+    var settings, compareOriginResult;
+
+    settings = {
+      'type': 'POST'
+    };
+
+    // if options exist, lets merge them with our default settings
+    if (options) {
+      $.extend(settings, options);
+    }
+
+    if (!options.url || !options.success) {
+      //console.log("url or callcack mssing");
+      return false;
+    }
+
+
+    if ((compareOriginResult = $.url(options.url).compareOrigin()) !== "") {
+      //is not same origin
+
+      //IE only allows POST and GET
+      if (typeof(window.XDomainRequest) !== "undefined" &&
+        compareOriginResult !== origin.protocol &&
+        ((options.type === 'GET') || (options.type === 'POST' && !options.data))) {
+        //client is IE8+
+        //protocol is the same
+        //no data that should be sent via POST
+        overWritejQueryAjax();
+      } else if (!(new XMLHttpRequest()).hasOwnProperty("withCredentials")) {
+        //client does not support CORS
+        options.dataType = "jsonp";
+      } //else CORS is supported
+    }
+
+    $.ajax(options);
+
+    return false;
+  };
+}($));
